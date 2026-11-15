@@ -20,12 +20,15 @@ tries to deserve a place next to that.
 A setup tool that picks for you takes that decision away, and an add-on that is fine today
 can be ruled out tomorrow. So this repo ships none and installs none.
 
-**No extra DLL mods.** The client runs on Apple Silicon with two files:
-`winerosetta.dll` and `libSiliconPatch.dll`. Those are compatibility shims. Everything
-else is a choice the player makes with the server's rules in hand.
+**No extra DLL mods.** The only change to the client is WoWSilicon's game patch: a
+Direct3D translation layer, a DLL loader, and two compatibility shims (`winerosetta.dll`
+and `libSiliconPatch.dll`). They make the client start on Apple Silicon and change nothing
+about how the game plays. Everything else is a choice the player makes with the server's
+rules in hand.
 
 **No game files here.** OctoWoW hosts its own client. Downloading from the server keeps
-players on the version the team actually publishes.
+players on the version the team actually publishes. The download address is fixed in the
+code and cannot be redirected with a setting.
 
 **No credentials.** A tool that never sees a password cannot leak one.
 

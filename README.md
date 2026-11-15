@@ -1,4 +1,4 @@
-# octowow-silicon
+# octosilicon
 
 **OctoWoW on an Apple Silicon Mac, in one command.**
 
@@ -11,17 +11,18 @@ No add-ons, no bots, no bundled game files.
 ## Quick start
 
 ```sh
-git clone https://github.com/staybased/octowow-silicon
-cd octowow-silicon
+git clone https://github.com/staybased/octosilicon
+cd octosilicon
 ./install.sh
 ```
 
 Then do the one step the installer cannot do for you (it prints these too):
 
 1. Open **WoWSilicon**
-2. Pick the **Vanilla 1.12.1** profile
-3. Choose the game folder: `~/Games/OctoWoW/client`
-4. Click **Patch**, then quit WoWSilicon
+2. Keep the **VanillaSilicon (1.12.1)** profile selected
+3. Set **Game Path** to `~/Games/OctoWoW/client`
+4. Apply the game patch, until it reads **Game Patch: Applied**
+5. Quit WoWSilicon
 
 Check it and play:
 
@@ -46,11 +47,13 @@ Log in with your OctoWoW account. Make one at [octowow.st](https://octowow.st) f
 | Step | What happens | Source |
 |---|---|---|
 | 1 | Checks the Mac, macOS version, Rosetta 2 and free disk space | |
-| 2 | Installs [WoWSilicon](https://github.com/WoWSilicon/WoWSilicon) 3.2.2, verified by SHA-256 | WoWSilicon's GitHub release |
+| 2 | Installs [WoWSilicon](https://github.com/WoWSilicon/WoWSilicon) 3.2.2 into `/Applications`, verified by SHA-256 | WoWSilicon's GitHub release |
 | 3 | Downloads and unpacks the OctoWoW client | `dl.octowow.st`, the official server |
 | 4 | Tells you how to patch the client, and checks that it worked | |
 
-Re-running is safe. Finished steps are skipped, and an interrupted download resumes.
+Re-running is safe. Finished steps are skipped, and an interrupted client download resumes.
+The installer never uses `sudo`, and it refuses to unpack into a folder that already has
+something in it.
 
 Options:
 
@@ -66,10 +69,12 @@ OCTOWOW_HOME=/Volumes/Games/OctoWoW ./install.sh       # install somewhere else
 These are rules, not missing features. They follow the
 [OctoWoW server rules](https://octowow.st/rules); the reasoning is in [docs/ETHOS.md](docs/ETHOS.md).
 
-- **No add-ons.** None are in this repo and none are installed. What you add is your call.
+- **No add-ons.** None are in this repo and none are installed. The official client ships
+  with Blizzard's own interface only, and that is what you get. What you add is your call.
 - **No bots, automation or multibox tools.** OctoWoW forbids them. `play.sh` starts the game
   and never sends it a keystroke or a click.
-- **No extra DLL mods.** Only the two files Apple Silicon needs to run the client at all.
+- **No extra DLL mods.** The only thing applied is WoWSilicon's game patch, which the
+  client needs to start on Apple Silicon at all.
 - **No game files.** The client is downloaded from OctoWoW, never from here.
 - **No credentials.** Nothing here reads, stores or types your password.
 
@@ -87,6 +92,8 @@ scripts/uninstall.sh --all   # also removes WoWSilicon and its Wine prefix
 ```
 
 It lists what will be deleted and asks first. Your characters live on the server.
+`--all` removes WoWSilicon and its Wine prefix even if you had them before this project;
+skip it if you use WoWSilicon for another game.
 
 ## Problems
 

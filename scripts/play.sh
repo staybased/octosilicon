@@ -15,6 +15,7 @@ ROSETTAX87="$RES/WoWSilicon-swift_WoWSiliconSwift.bundle/Patching/rosettax87/ros
 client_present "$CLIENT_DIR" || die "No client at $CLIENT_DIR. Run ./install.sh first."
 [ -x "$WINE" ] || die "WoWSilicon is missing or incomplete at $WOWSILICON_APP. Run ./install.sh."
 [ -z "$(missing_patch_files)" ] || die "The client is not patched for Apple Silicon yet. Run scripts/doctor.sh for the fix."
+[ -x "$ROSETTAX87" ] || die "This WoWSilicon version is laid out differently from the tested one ($WOWSILICON_VERSION). Press Play inside WoWSilicon instead."
 [ -d "$WINE_PREFIX/drive_c" ] || die "No Wine prefix at $WINE_PREFIX. Open WoWSilicon once so it can create it."
 
 if game_running; then
@@ -22,6 +23,7 @@ if game_running; then
   exit 0
 fi
 
+LOG="$OCTOWOW_HOME/play.log"
 cd "$CLIENT_DIR"
 ROSETTA_X87_PATH="$ROSETTAX87" \
 WINEPREFIX="$WINE_PREFIX" \
@@ -32,6 +34,7 @@ WINEDLLOVERRIDES='d3d9=n' \
 MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS=1 \
 DXVK_ASYNC=1 \
 MTL_HUD_ENABLED=0 \
-  nohup "$WINE" "$CLIENT_DIR/WoW.exe" >/dev/null 2>&1 &
+  nohup "$WINE" "$CLIENT_DIR/WoW.exe" >"$LOG" 2>&1 &
 
 say "OctoWoW is starting. The first launch takes longer while shaders build."
+say "If no window appears, see $LOG"

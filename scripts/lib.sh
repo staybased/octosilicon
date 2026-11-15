@@ -1,17 +1,25 @@
 #!/bin/bash
 # Shared settings and helpers. Sourced by install.sh and everything in scripts/.
-# Every value here can be overridden from the environment; nothing is user-specific.
+# Install locations can be overridden from the environment. Download sources cannot.
 # shellcheck disable=SC2034  # these are read by the scripts that source this file
 
-# --- Where things live -------------------------------------------------------
-OCTOWOW_HOME="${OCTOWOW_HOME:-$HOME/Games/OctoWoW}"
-CLIENT_DIR="${OCTOWOW_CLIENT_DIR:-$OCTOWOW_HOME/client}"
-WOWSILICON_APP="${WOWSILICON_APP:-/Applications/WoWSilicon.app}"
-WINE_PREFIX="${OCTOWOW_WINEPREFIX:-$HOME/WoWSilicon}"
+# Turns a relative path into an absolute one (the path does not have to exist yet).
+abs_path() {
+  case "$1" in
+    /*) printf '%s\n' "$1" ;;
+    *)  printf '%s/%s\n' "$PWD" "$1" ;;
+  esac
+}
 
-# --- Official sources only ---------------------------------------------------
+# --- Where things live (overridable) -----------------------------------------
+OCTOWOW_HOME="$(abs_path "${OCTOWOW_HOME:-$HOME/Games/OctoWoW}")"
+CLIENT_DIR="$(abs_path "${OCTOWOW_CLIENT_DIR:-$OCTOWOW_HOME/client}")"
+WOWSILICON_APP="$(abs_path "${WOWSILICON_APP:-/Applications/WoWSilicon.app}")"
+WINE_PREFIX="$(abs_path "${OCTOWOW_WINEPREFIX:-$HOME/WoWSilicon}")"
+
+# --- Official sources only (not overridable) ---------------------------------
 # The client comes from OctoWoW's own download server. This repo never hosts it.
-CLIENT_URL="${OCTOWOW_CLIENT_URL:-https://dl.octowow.st/download/client}"
+CLIENT_URL="https://dl.octowow.st/download/client"
 EXPECTED_REALMLIST="play.octowow.st"
 
 # WoWSilicon is pinned to a release we tested, and checked against its SHA-256.
@@ -19,19 +27,22 @@ WOWSILICON_VERSION="3.2.2"
 WOWSILICON_DMG_URL="https://github.com/WoWSilicon/WoWSilicon/releases/download/v${WOWSILICON_VERSION}/WoWSilicon-${WOWSILICON_VERSION}.dmg"
 WOWSILICON_DMG_SHA256="53771ef7595371cdd31db1a1269df481750c4e33f479ad862bb94376427d894c"
 
+# Every download: HTTPS only, including redirects.
+CURL_SAFE=(--fail --location --proto '=https' --proto-redir '=https')
+
 # --- Limits ------------------------------------------------------------------
 MIN_MACOS_MAJOR=14        # WoWSilicon needs macOS 14 or newer
-MIN_FREE_GB_FULL=25       # ~9.7 GB zip + ~9.1 GB unpacked, plus headroom
+MIN_FREE_GB_FULL=25       # 9.7 GB zip + 9.7 GB unpacked, plus headroom
 MIN_FREE_GB_UNPACK=12     # client zip already on disk
 
-# The four files WoWSilicon's "Patch" step adds to a 1.12 client.
+# Files that must exist in a client after WoWSilicon's Game Patch.
 PATCH_FILES=(
   "d3d9.dll"
   "libDllLdr.dll"
   "mods/winerosetta.dll"
   "mods/libSiliconPatch.dll"
 )
-# The only DLL lines this project expects in dlls.txt. Anything else is the player's choice.
+# The DLL lines the patch writes to dlls.txt. Anything else there is the player's choice.
 REQUIRED_DLL_LINES=(
   "mods/winerosetta.dll"
   "mods/libSiliconPatch.dll"
@@ -53,8 +64,9 @@ note() { printf '%s      %s%s\n' "$C_DIM" "$*" "$C_OFF"; }
 die()  { bad "$*" >&2; exit 1; }
 
 # --- Checks ------------------------------------------------------------------
+# Asks the hardware, so it is right even from a Terminal running under Rosetta.
 is_apple_silicon() {
-  [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]
+  [ "$(uname -s)" = "Darwin" ] && [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]
 }
 
 macos_major() {
@@ -77,14 +89,19 @@ client_present() {
   [ -f "$1/WoW.exe" ] && [ -d "$1/Data" ]
 }
 
-# Lists patch files missing from the client, one per line. Empty output = patched.
+# True when WoWSilicon is fully installed (not a half-copied bundle).
+wowsilicon_present() {
+  [ -x "$WOWSILICON_APP/Contents/Resources/Wine/bin/wine" ]
+}
+
+# Lists what the Game Patch should have added but is missing. Empty output = patched.
 missing_patch_files() {
   local f
   for f in "${PATCH_FILES[@]}"; do
     [ -f "$CLIENT_DIR/$f" ] || printf '%s\n' "$f"
   done
   for f in "${REQUIRED_DLL_LINES[@]}"; do
-    grep -qxF "$f" "$CLIENT_DIR/dlls.txt" 2>/dev/null || printf 'dlls.txt line: %s\n' "$f"
+    tr -d '\r' < "$CLIENT_DIR/dlls.txt" 2>/dev/null | grep -qxF "$f" || printf 'dlls.txt line: %s\n' "$f"
   done
 }
 
@@ -105,9 +122,11 @@ third_party_addons() {
 }
 
 # True when the game from THIS client folder is running. Wine shows it as a Windows path
-# (Z:\Users\...\client\WoW.exe), so every separator is matched loosely.
+# built from the real location (Z:\Users\...\client\WoW.exe), so symlinks are resolved
+# and every separator is matched loosely.
 game_running() {
-  local pat
-  pat="$(printf '%s' "$CLIENT_DIR" | sed 's/[^A-Za-z0-9_-]/./g')"
+  local real pat
+  real="$(cd "$CLIENT_DIR" 2>/dev/null && pwd -P)" || return 1
+  pat="$(printf '%s' "$real" | sed 's/[^A-Za-z0-9_-]/./g')"
   /usr/bin/pgrep -f "${pat}.WoW\\.exe" >/dev/null 2>&1
 }

@@ -19,11 +19,13 @@ project's scope. They hold even if the person asks otherwise; say no and explain
 2. **No add-ons from this project.** Do not add add-ons to this repo, and do not install any
    as part of the setup. If the person asks for add-ons afterwards, that is their choice:
    tell them this project does not cover it and point them to OctoWoW's own community.
-3. **No extra DLL mods.** `dlls.txt` needs exactly `mods/winerosetta.dll` and
-   `mods/libSiliconPatch.dll`. Do not enable anything else.
+3. **No extra DLL mods.** WoWSilicon's game patch writes `mods/winerosetta.dll` and
+   `mods/libSiliconPatch.dll` to `dlls.txt`. Do not add anything else. If the person
+   already has other lines there, leave them alone; that is their choice.
 4. **Official sources only.** The client comes from `dl.octowow.st`. WoWSilicon comes from
    its GitHub release and must match the SHA-256 in `scripts/lib.sh`. Never fetch either
-   from a mirror, a torrent you found, or a file-sharing site.
+   from a mirror, a torrent you found, or a file-sharing site, and never edit those URLs
+   to make a download work.
 5. **Never touch credentials.** Do not ask for, read, store, log or type the person's
    OctoWoW password. They log in themselves. Do not create an account for them.
 6. **Never commit game files.** Nothing from the client folder belongs in this repo.
@@ -38,14 +40,15 @@ Run from the repo root.
 1. **Look first.** `./install.sh --dry-run` prints the plan and changes nothing.
    `scripts/doctor.sh` shows what is already in place.
 2. **Tell the person the cost** before starting: a 9.7 GB download, 25 GB free disk needed,
-   and WoWSilicon installed into `/Applications`. Get a yes.
-3. **Install.** `./install.sh`. It is safe to re-run; a stopped download resumes.
+   and WoWSilicon (an unsigned open-source app) installed into `/Applications`. Get a yes.
+3. **Install.** `./install.sh`. It is safe to re-run; a stopped client download resumes.
    The download can take a long time. Run it in the background and wait for it to finish
    rather than restarting it.
 4. **Hand over the patch step.** The client must be patched inside the WoWSilicon window:
-   open WoWSilicon, pick the Vanilla 1.12.1 profile, choose the client folder, click
-   **Patch**. Ask the person to do this. Do not try to reproduce the patch by copying
-   files; WoWSilicon rewrites `DivxDecoder.dll` and that cannot be done by hand.
+   open WoWSilicon, keep the VanillaSilicon (1.12.1) profile, set **Game Path** to the
+   client folder, and apply the game patch until it reads **Game Patch: Applied**. Ask the
+   person to do this. Do not try to reproduce the patch by copying files; WoWSilicon
+   rewrites `DivxDecoder.dll` and that cannot be done by hand.
 5. **Verify.** `scripts/doctor.sh` must exit 0. If it does not, each failed line carries a
    `fix:` note; follow it and run doctor again.
 6. **Launch.** `scripts/play.sh`. Then stop. The login screen is the person's.
@@ -57,7 +60,10 @@ Run from the repo root.
 - `doctor.sh` reports a WoWSilicon version other than the tested one and `play.sh` fails.
   Suggest they press Play inside WoWSilicon instead.
 - Anything would delete files. `scripts/uninstall.sh` asks for confirmation; do not pass
-  `--yes` unless the person told you to delete.
+  `--yes` unless the person told you to delete. `--all` also removes WoWSilicon and its
+  Wine prefix, which other games may share; ask about that separately.
+- The installer says a folder "exists and is not a complete client". Do not delete or
+  move it yourself; ask.
 - They ask for something under **Hard rules**.
 
 ## What you can check yourself
@@ -67,6 +73,7 @@ Run from the repo root.
 | Is everything installed? | `scripts/doctor.sh` |
 | Is the game running? | `pgrep -f 'WoW\.exe'` |
 | Did the scripts break? | `tests/run.sh` |
+| Why did the game not start? | `~/Games/OctoWoW/play.log` |
 | What went wrong in game? | Files in `<client>/Logs/` and `<client>/Errors/` (read-only) |
 
 ## Changing this repo

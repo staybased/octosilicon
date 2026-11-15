@@ -17,11 +17,12 @@ if [ "${major:-0}" -ge "$MIN_MACOS_MAJOR" ]; then ok "macOS $major"; else fail "
 if has_rosetta; then ok "Rosetta 2"; else fail "Rosetta 2 is not installed" "softwareupdate --install-rosetta"; fi
 
 step "WoWSilicon"
-if [ -d "$WOWSILICON_APP" ]; then
+if wowsilicon_present; then
   ver="$(defaults read "$WOWSILICON_APP/Contents/Info.plist" CFBundleShortVersionString 2>/dev/null || echo unknown)"
   ok "$WOWSILICON_APP (version $ver)"
   [ "$ver" = "$WOWSILICON_VERSION" ] || warn "Tested with WoWSilicon $WOWSILICON_VERSION; you have $ver. scripts/play.sh may need the app's own Play button instead."
-  if [ -x "$WOWSILICON_APP/Contents/Resources/Wine/bin/wine" ]; then ok "Bundled Wine"; else fail "Bundled Wine is missing from WoWSilicon" "reinstall WoWSilicon"; fi
+elif [ -e "$WOWSILICON_APP" ]; then
+  fail "$WOWSILICON_APP is incomplete (no bundled Wine)" "move it to the Trash, then ./install.sh"
 else
   fail "WoWSilicon is not installed" "./install.sh"
 fi
@@ -45,7 +46,7 @@ if client_present "$CLIENT_DIR"; then
   if [ -z "$missing" ]; then
     ok "All patch files present"
   else
-    fail "Client is not patched yet" "open WoWSilicon, choose $CLIENT_DIR, click Patch"
+    fail "Client is not patched yet" "open WoWSilicon, set Game Path to $CLIENT_DIR, apply the game patch"
     printf '%s\n' "$missing" | while IFS= read -r m; do note "missing: $m"; done
   fi
 else
