@@ -1,0 +1,13 @@
+# Game files never belong in this repo.
+*.mpq
+*.MPQ
+*.exe
+*.dll
+*.zip
+*.dmg
+*.wtf
+client/
+WTF/
+Interface/
+.unpack/
+.DS_Store
